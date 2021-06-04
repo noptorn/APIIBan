@@ -1,0 +1,120 @@
+{
+	"info": {
+		"_postman_id": "493280c9-a783-41bf-9b9b-6924150be2e5",
+		"name": "ExamBND",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "bank/transfer",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"account\": {\r\n    \"accountID\": \"N1012000311\"\r\n  },\r\n  \r\n  \"withdraw\": 10,\r\n   \"destinationAcoountID\": \"N10120003\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/bank/transfer",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"bank",
+						"transfer"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "bank/deposit",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"account\": {\r\n    \"accountID\": \"N1012000311\"\r\n  },\r\n  \r\n    \"deposit\": 200\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/bank/deposit",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"bank",
+						"deposit"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "bank/register",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"account\": {\r\n    \"accountID\": \"N1012000311\",\r\n    \"balance\": 100\r\n  }\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://localhost:5000/api/bank/register",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"bank",
+						"register"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "bank/accounts",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:5000/api/bank/accounts",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"api",
+						"bank",
+						"accounts"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
