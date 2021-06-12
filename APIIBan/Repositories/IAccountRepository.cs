@@ -8,13 +8,12 @@ namespace APIIBan.Repositories
 {
     public interface IAccountRepository
     {
-        void SaveAccountDB(List<Account> accounts);
+       // void SaveAccountDB(List<AccountFileDB> accounts);
         
-        Account NewAccount(Account account);
-
-        Account Deposit(Account account, decimal deposit, bool isFee);
-        Account Transfer(Account account, decimal withdraw, Account toAccount);
-        Account GetAccount(string accountID);
-        List<Account> GetAccounts();
+        Task NewAccount(Account account, AccountResource resource);
+        Task Deposit(Account account, AccountResource resource);
+        Task<Account> GetAccount(string accountID);
+        Task Transfer(Account account, Account toAccount, AccountResource resource);
+        Task<List<Account>> GetAccounts();
     }
 }

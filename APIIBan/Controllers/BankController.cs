@@ -3,6 +3,7 @@ using APIIBan.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.NodeServices;
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace APIIBan.Controllers
@@ -14,7 +15,6 @@ namespace APIIBan.Controllers
         private IAccountService _iactService;
         private INodeServices _nodeService;
 
-        [System.Obsolete]
         public BankController(IAccountService accountService, INodeServices nodeService)
         {
             _iactService = accountService;
@@ -36,72 +36,90 @@ namespace APIIBan.Controllers
             return id;
         }
 
+        private bool ValidateHeaderKey()
+        {
+            string key = this.Request.Headers["x-system-key"].ToString();
+            return this._iactService.IsSystemAuthen(key);
+        }
+
         [HttpPost("register")]
         public async Task<IActionResult> Register([FromBody] AccountResource resource)
         {
-
-            if (ModelState.IsValid)
+            if (this.ValidateHeaderKey())
             {
-                if (string.IsNullOrEmpty(resource.Account.AccountID))
+                if (ModelState.IsValid)
                 {
-                    resource.Account.AccountID = await this.GetAccountID();
-                }
+                    if (string.IsNullOrEmpty(resource.AccountID))
+                    {
+                        resource.AccountID = await this.GetAccountID();
+                    }
 
-                resource.Account = this._iactService.NewAccount(resource.Account);
-                resource.Response.StatusCode = "0000";
+                    await this._iactService.NewAccount(resource);
+                }
+                else
+                {
+                    resource.Response.ErrorMessage = "Model state is unvalid";
+                }
             }
             else
             {
-                resource.Response.IsError = true;
-                resource.Response.StatusCode = "400";
-                resource.Response.ErrorMessage = "Model state is unvalid";
+                resource.Response.ErrorMessage = "Authen Fail.";
             }
-
             return StatusCode(resource.Response.IsError ? 400 : 200, resource);
         }
 
         [HttpPost("deposit")]
-        public IActionResult Deposit([FromBody] AccountResource resource)
+        public async Task<IActionResult> Deposit([FromBody] AccountResource resource)
         {
-            if (ModelState.IsValid)
+            if (this.ValidateHeaderKey())
             {
-                resource.Account = this._iactService.Deposit(resource.Account, resource.Deposit);
-                resource.Response.StatusCode = "0000";
+                if (ModelState.IsValid)
+                {
+                    await this._iactService.Deposit(resource);
+                }
+                else
+                {
+                    resource.Response.ErrorMessage = "Model state is unvalid";
+                }
             }
             else
             {
-                resource.Response.IsError = true;
-                resource.Response.StatusCode = "400";
-                resource.Response.ErrorMessage = "Model state is unvalid";
+                resource.Response.ErrorMessage = "Authen Fail.";
             }
-
             return StatusCode(resource.Response.IsError ? 400 : 200, resource);
         }
 
 
         [HttpPost("transfer")]
-        public IActionResult Transfer([FromBody] AccountResource resource)
+        public async Task<IActionResult> Transfer([FromBody] AccountResource resource)
         {
-            if (ModelState.IsValid)
+            if (this.ValidateHeaderKey())
             {
-                this._iactService.Transfer(resource);
-                resource.Response.StatusCode = !resource.Response.IsError ? "0000" : "9999";
+                if (ModelState.IsValid)
+                {
+                    await this._iactService.Transfer(resource);
+                }
+                else
+                {
+                    resource.Response.ErrorMessage = "Model state is unvalid";
+                }
             }
             else
             {
-                resource.Response.IsError = true;
-                resource.Response.StatusCode = "400";
-                resource.Response.ErrorMessage = "Model state is unvalid";
+                resource.Response.ErrorMessage = "Authen Fail.";
             }
-
             return StatusCode(resource.Response.IsError ? 400 : 200, resource);
+
         }
 
         [HttpGet("accounts")]
-        public IActionResult GetAccount()
+        public async Task<IActionResult> GetAccount()
         {
-            var acts = this._iactService.GetAccounts();
-
+            var acts = new List<Account>();
+            if (this.ValidateHeaderKey())
+            {
+                acts = await this._iactService.GetAccounts();
+            }
             return StatusCode(200, acts);
         }
     }

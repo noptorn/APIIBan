@@ -4,6 +4,6 @@ namespace APIIBan.Services
 {
     public abstract class IAccountServiceBase
     {
-        public abstract Account NewAccount(AccountResource resource);
+        public abstract AccountFileDB NewAccount(AccountResource resource);
     }
 }

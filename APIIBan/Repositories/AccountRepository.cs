@@ -1,4 +1,6 @@
-﻿using APIIBan.Model;
+﻿using AllnowRiderAPI.Data;
+using APIIBan.Model;
+using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,37 +11,57 @@ using System.Threading.Tasks;
 
 namespace APIIBan.Repositories
 {
-    public class AccountRepository : IAccountRepository
+    public class AccountRepository : RepositoryBase<dynamic>, IAccountRepository
     {
         private string filePath = "./Data/Data.json";
+        private readonly BanDB _context;
 
-
-        public Account NewAccount(Account account)
+        public AccountRepository(BanDB context) : base(context)
         {
-            Account nact = account;
-
-            List<Account> acts = this.LoadAccountDB();
-            if (acts.Contains(nact))
-            {
-                nact = acts[acts.IndexOf(nact)];
-            }
-            else
-            {
-                acts.Add(nact);
-            }
-            this.SaveAccountDB(acts);
-
-            return nact;
+            this._context = context;
         }
 
-        public Account GetAccount(string accountID)
+        public async Task NewAccount(Account act, AccountResource resource)
         {
-            Account nact = new Account()
+            try
+            {
+                using (var con = this._context.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        _context.Accounts.Add(act);
+                        _context.Transactions.Add(act.TransactionsHistory[0]);
+                        _context.SaveChanges();
+                        await con.CommitAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        await con.RollbackAsync();
+                        resource.Response.ErrorMessage = string.Format("Register Save fail! : {0}", ex.Message);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                resource.Response.ErrorMessage = string.Format("Register Connection fail!: " + ex.Message);
+            }
+
+        }
+
+
+        public async Task<Account> GetAccount(string accountID)
+        {
+            return  await this._context.Accounts.Where(x => x.AccountID.Equals(accountID)).AsNoTracking().FirstOrDefaultAsync();
+        }
+
+        public AccountFileDB GetAccountFile(string accountID)
+        {
+            AccountFileDB nact = new AccountFileDB()
             {
                 AccountID = accountID
             };
 
-            List<Account> acts = this.LoadAccountDB();
+            List<AccountFileDB> acts = this.LoadAccountDB();
             if (acts.Contains(nact))
             {
                 nact = acts[acts.IndexOf(nact)];
@@ -48,19 +70,19 @@ namespace APIIBan.Repositories
             return nact;
         }
 
-        public void SaveAccountDB(List<Account> accounts)
+        public void SaveAccountDB(List<AccountFileDB> accounts)
         {
             string val = JsonSerializer.Serialize(accounts);
             File.WriteAllText(filePath, val, Encoding.UTF8);
         }
 
-        private List<Account> LoadAccountDB()
+        private List<AccountFileDB> LoadAccountDB()
         {
-            List<Account> accts = new List<Account>();
+            List<AccountFileDB> accts = new List<AccountFileDB>();
             try
             {
                 string val = File.ReadAllText(filePath);
-                accts = JsonSerializer.Deserialize<List<Account>>(val);
+                accts = JsonSerializer.Deserialize<List<AccountFileDB>>(val);
 
             }
             catch (Exception ex)
@@ -71,43 +93,90 @@ namespace APIIBan.Repositories
             return accts;
         }
 
-        public Account Deposit(Account account, decimal deposit, bool isFee)
+        public async Task Deposit(Account act, AccountResource resource)
         {
-            Account nact = account;            
-            List<Account> acts = this.LoadAccountDB();
-            if (acts.Contains(nact))
+            try
             {
-                nact = acts[acts.IndexOf(nact)];
+                using (var con = this._context.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        var dbAct = _context.Accounts.Where(x => x.AccountID.Equals(act.AccountID)).FirstOrDefault();
+                        dbAct.Balance = act.Balance;
+                        dbAct.ChangeDate = DateTime.Now;
+                        Transaction tran = new Transaction()
+                        {
+                            AccountID = act.AccountID,
+                            Amount = resource.Deposit,
+                            Status = "Y",
+                            Type = "D",
+                            CreateDate = DateTime.Now,
+                            ChangeDate = DateTime.Now
+                        };
+                        _context.Transactions.Add(tran);
+                        _context.SaveChanges();
+                        await con.CommitAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        await con.RollbackAsync();
+                        resource.Response.ErrorMessage = string.Format("Deposit Save fail! : {0}", ex.Message);
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                acts.Add(nact);
+                resource.Response.ErrorMessage = string.Format("Deposit Connection fail!: " + ex.Message);
             }
-            nact.Deposit(deposit, string.Empty, isFee);
-            
-            this.SaveAccountDB(acts);
-
-            return nact;
         }
 
-        public Account Transfer(Account account, decimal withdraw, Account toAccount)
+        public async Task Transfer(Account account, Account desAccount, AccountResource resource)
         {
-            List<Account> acts = this.LoadAccountDB();
+            try
+            {
+                using (var con = this._context.Database.BeginTransaction())
+                {
+                    try
+                    {
+                        await this.SetAccount(account, -1 * resource.Transfer, "W");
+                        await this.SetAccount(desAccount, resource.Transfer, "D");
 
-            Account sAct = acts[acts.IndexOf(account)];
-            Account dAct = acts[acts.IndexOf(toAccount)];
-
-            sAct.Withdraw(withdraw, toAccount.AccountID);
-            dAct.Deposit(withdraw, sAct.AccountID, false);
-
-            this.SaveAccountDB(acts);
-
-            return sAct;
+                        _context.SaveChanges();
+                        await con.CommitAsync();
+                    }
+                    catch (Exception ex)
+                    {
+                        await con.RollbackAsync();
+                        resource.Response.ErrorMessage = string.Format("Deposit Save fail! : {0}", ex.Message);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                resource.Response.ErrorMessage = string.Format("Deposit Connection fail!: " + ex.Message);
+            }
         }
 
-        public List<Account> GetAccounts()
+        private async Task SetAccount(Account act, decimal amount, string type)
         {
-            return this.LoadAccountDB();
+            var dbSrcAct = _context.Accounts.Where(x => x.AccountID.Equals(act.AccountID)).FirstOrDefault();
+            dbSrcAct.Balance = act.Balance;
+            dbSrcAct.ChangeDate = DateTime.Now;
+            Transaction srcTran = new Transaction()
+            {
+                AccountID = act.AccountID,
+                Amount = amount,
+                Status = "Y",
+                Type = type,
+                CreateDate = DateTime.Now,
+                ChangeDate = DateTime.Now
+            };
+            _context.Transactions.Add(srcTran);
+        }
+
+        public async Task<List<Account>> GetAccounts()
+        {
+            return await this._context.Accounts.AsNoTracking().ToListAsync<Account>();
         }
     }
 }

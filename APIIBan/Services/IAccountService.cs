@@ -9,9 +9,10 @@ namespace APIIBan.Services
 {
     public interface IAccountService
     {
-        Account NewAccount(Account resource);
-        Account Deposit(Account resource, decimal deposit);
-        void Transfer(AccountResource resource);
-        List<Account> GetAccounts();
+        Task NewAccount(AccountResource resource);
+        Task Deposit(AccountResource resource);
+        Task Transfer(AccountResource resource);
+        bool IsSystemAuthen(string key);
+        Task<List<Account>> GetAccounts();
     }
 }
