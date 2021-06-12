@@ -12,7 +12,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"account\": {\r\n    \"accountID\": \"N1012000311\"\r\n  },\r\n  \r\n  \"withdraw\": 10,\r\n   \"destinationAcoountID\": \"N10120003\"\r\n}",
+					"raw": "{\r\n  \"accountID\": \"N1012009871\",\r\n  \"destinationAcoountID\": \"N1012000311\",\r\n  \"transfer\": 500\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -42,7 +42,7 @@
 				"header": [],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"account\": {\r\n    \"accountID\": \"N1012000311\"\r\n  },\r\n  \r\n    \"deposit\": 200\r\n}",
+					"raw": "{\r\n  \"accountID\": \"N1012009871\",\r\n  \"firstName\": \"Ms.Punnana\",\r\n  \"lastName\": \"Sukjaiji\",\r\n   \"deposit\": 1000\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -69,10 +69,16 @@
 			"name": "bank/register",
 			"request": {
 				"method": "POST",
-				"header": [],
+				"header": [
+					{
+						"key": "x-system-key",
+						"value": "ertyuiokjhgcxasdwaakspkw[kadlal",
+						"type": "text"
+					}
+				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\r\n  \"account\": {\r\n    \"accountID\": \"N1012000311\",\r\n    \"balance\": 100\r\n  }\r\n}",
+					"raw": "{\r\n  \"accountID\": \"N1012091201\",\r\n  \"firstName\": \"Ms.Pinorat\",\r\n  \"lastName\": \"Rekumkee\",\r\n   \"deposit\": 10000\r\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -99,7 +105,13 @@
 			"name": "bank/accounts",
 			"request": {
 				"method": "GET",
-				"header": [],
+				"header": [
+					{
+						"key": "x-system-key",
+						"value": "ertyuiokjhgcxasdwaakspkw[kadlal",
+						"type": "text"
+					}
+				],
 				"url": {
 					"raw": "http://localhost:5000/api/bank/accounts",
 					"protocol": "http",
@@ -111,6 +123,13 @@
 						"api",
 						"bank",
 						"accounts"
+					],
+					"query": [
+						{
+							"key": "",
+							"value": "",
+							"disabled": true
+						}
 					]
 				}
 			},
